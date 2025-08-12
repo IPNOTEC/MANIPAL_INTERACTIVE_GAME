@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MANIPAL MULTIVERSE | FACULTY COMPUTING</title>
+    <!-- Use Tailwind for a responsive and modern layout -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Fonts from the original file for a consistent theme -->
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Orbitron:wght@400;700&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Chart.js for data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        /* Define custom CSS variables for the color palette and fonts from the original file */
+        :root {
+            --manipal-orange: #ff6900;
+            --manipal-orange-dark: #d45a00;
+            --manipal-orange-light: #ff8c33;
+            --dark-bg: #0a0f2a;
+            --card-bg: rgba(15, 25, 50, 0.7);
+            --light-grey: #AAAAAA;
+            --grid-color: rgba(255, 105, 0, 0.1);
+            --glow: 0 0 10px var(--manipal-orange);
+            --tribe-violet: #8F00F0;
+            --tribe-blue: #0070B0;
+            --tribe-green: #45DE10;
+            --tribe-yellow: #FFF000;
+            --tribe-red: #FF000F;
+            --current-accent: var(--manipal-orange);
+            --font-heading: 'Orbitron', sans-serif;
+            --font-body: 'Rajdhani', sans-serif;
+            --font-mono: 'Space Mono', monospace;
+            --transition: all 0.3s ease;
+        }
+
+        /* Set base styles for the body and handle backgrounds */
+        body {
+            font-family: var(--font-body);
+            background: #000;
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* Background effects to match the original theme */
+        .cosmic-bg {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at 50% 50%, transparent 60%, rgba(0, 0, 0, 0.7) 100%), 
+                        linear-gradient(to bottom, var(--dark-bg), #051026);
+            z-index: -2;
+        }
+        
+        .grid-pattern {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: linear-gradient(to right, var(--grid-color) 1px, transparent 1px), 
+                              linear-gradient(to bottom, var(--grid-color) 1px, transparent 1px);
+            background-size: 50px 50px; z-index: -1;
+        }
+
+        /* Generic card and button styles */
+        .card {
+            background: var(--card-bg);
+            border: 2px solid var(--current-accent);
+            box-shadow: 0 5px 20px rgba(255, 105, 0, 0.3);
+            transition: var(--transition);
+        }
+        .btn {
+            font-family: var(--font-heading);
+            background: var(--current-accent);
+            color: #000;
+            font-weight: bold;
+            transition: var(--transition);
+        }
+        .btn:hover {
+            background: var(--manipal-orange-light);
+            transform: translateY(-3px);
+            box-shadow: 0 0 25px var(--current-accent);
+        }
+
+        /* Chat-specific styles */
+        .chat-section {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 100;
+            background: linear-gradient(135deg, #050505, #101010);
+            padding: 1rem;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message {
+            max-width: 85%;
+            padding: 1rem;
+            border-radius: 1rem;
+            animation: fadeIn 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            word-break: break-word;
+        }
+
+        .user-message {
+            align-self: flex-end;
+            background: linear-gradient(135deg, var(--manipal-orange), var(--manipal-orange-light));
+            color: #000;
+        }
+
+        .bot-message {
+            align-self: flex-start;
+            background: rgba(30, 30, 60, 0.9);
+            border: 1px solid var(--light-grey);
+        }
+
+        .chat-input-container {
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.9);
+            border-top: 2px solid var(--current-accent);
+            display: flex;
+            align-items: center;
+        }
+
+        #message-input {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            font-family: var(--font-body);
+            font-size: 1.1rem;
+            outline: none;
+        }
+
+        #message-input:focus {
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 0 10px var(--current-accent);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .loading-spinner {
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top: 4px solid var(--manipal-orange);
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-black text-white">
+
+    <!-- Background Elements -->
+    <div class="cosmic-bg"></div>
+    <div class="grid-pattern"></div>
+
+    <!-- Main Hub Section -->
+    <main id="hub-section" class="container mx-auto p-5 relative z-10 space-y-8">
+        
+        <!-- Header Section -->
+        <header class="text-center py-5 mb-5 animate-fade-in">
+            <h1 class="font-['Orbitron'] text-4xl sm:text-5xl lg:text-6xl uppercase bg-clip-text text-transparent bg-gradient-to-r from-orange-500 to-orange-300 tracking-wide shadow-orange-500 shadow-lg mb-4">
+                MANIPAL MULTIVERSE
+            </h1>
+            <p class="text-lg sm:text-xl lg:text-2xl text-gray-400 max-w-4xl mx-auto">
+                FACULTY COMPUTING // NAVIGATE THE CYBER-COSMOS.
+            </p>
+        </header>
+
+        <!-- Avatar Creation Section -->
+        <section class="card rounded-2xl p-6 sm:p-8 lg:p-10 hover:shadow-orange-500 hover:shadow-2xl hover:-translate-y-1">
+            <div class="flex items-center gap-4 border-b-2 border-orange-500 pb-4 mb-6">
+                <i class="fas fa-user-astronaut text-3xl text-orange-500"></i>
+                <h2 class="font-['Orbitron'] text-2xl text-orange-500 uppercase">Create Your Avatar</h2>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+                <!-- Avatar Form -->
+                <div class="flex flex-col">
+                    <form id="avatar-form" class="space-y-4">
+                        <div class="space-y-2">
+                            <label for="futureName" class="text-lg font-bold">Future Name:</label>
+                            <input type="text" id="futureName" class="w-full bg-black/70 text-white rounded-lg px-4 py-3 border-2 border-orange-500 focus:border-orange-300 focus:outline-none focus:shadow-[0_0_15px_rgba(255,105,0,0.5)]" placeholder="Enter your callsign" required>
+                        </div>
+                        <div class="space-y-2">
+                            <label for="tribe" class="text-lg font-bold">Choose your Tribe:</label>
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-2">
+                                <div class="color-option relative rounded-lg" data-tribe="Violet" style="background-color: var(--tribe-violet);"></div>
+                                <div class="color-option relative rounded-lg" data-tribe="Blue" style="background-color: var(--tribe-blue);"></div>
+                                <div class="color-option relative rounded-lg" data-tribe="Green" style="background-color: var(--tribe-green);"></div>
+                                <div class="color-option relative rounded-lg" data-tribe="Red" style="background-color: var(--tribe-red);"></div>
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <label for="iid" class="text-lg font-bold">Identity ID:</label>
+                            <input type="text" id="iid" class="w-full bg-black/70 text-white rounded-lg px-4 py-3 border-2 border-orange-500 focus:border-orange-300 focus:outline-none focus:shadow-[0_0_15px_rgba(255,105,0,0.5)]" placeholder="Generated on save" readonly>
+                        </div>
+                        <button type="submit" class="btn w-full py-4 rounded-xl mt-4">Save Avatar</button>
+                    </form>
+                </div>
+                <!-- Avatar Preview -->
+                <div class="flex flex-col items-center justify-center space-y-4">
+                    <div class="w-48 h-48 sm:w-60 sm:h-60 rounded-full bg-black/50 border-4 border-orange-500 flex items-center justify-center overflow-hidden relative">
+                        <i id="avatar-icon-preview" class="fas fa-user-circle text-8xl sm:text-10xl text-white"></i>
+                    </div>
+                    <div class="text-center p-4 bg-black/50 rounded-xl border border-orange-500 w-full">
+                        <h3 id="avatar-name-preview" class="text-2xl font-bold text-orange-500">Callsign_Preview</h3>
+                        <p id="avatar-tribe-preview" class="text-lg text-white">Tribe: None</p>
+                        <p id="avatar-iid-preview" class="font-['Space_Mono'] text-sm text-gray-400 mt-1">IID: 000000-0000</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Game Module Tabs -->
+        <section class="card rounded-2xl p-6 sm:p-8 lg:p-10 hover:shadow-orange-500 hover:shadow-2xl hover:-translate-y-1">
+            <div class="flex items-center gap-4 border-b-2 border-orange-500 pb-4 mb-6">
+                <i class="fas fa-gamepad text-3xl text-orange-500"></i>
+                <h2 class="font-['Orbitron'] text-2xl text-orange-500 uppercase">Game Module</h2>
+            </div>
+            
+            <!-- Tab Navigation -->
+            <div class="flex flex-wrap gap-2 mb-6">
+                <button class="tab-button bg-gray-700/50 hover:bg-orange-500/50 px-4 py-2 rounded-lg text-sm md:text-base active-tab" data-tab="strategic-matrix">Strategic Matrix</button>
+                <button class="tab-button bg-gray-700/50 hover:bg-orange-500/50 px-4 py-2 rounded-lg text-sm md:text-base" data-tab="venture-architect">Venture Architect</button>
+                <button class="tab-button bg-gray-700/50 hover:bg-orange-500/50 px-4 py-2 rounded-lg text-sm md:text-base" data-tab="partner-matchmaker">Partner Matchmaker</button>
+                <button class="tab-button bg-gray-700/50 hover:bg-orange-500/50 px-4 py-2 rounded-lg text-sm md:text-base" data-tab="ai-strategy-advisor">AI Strategy Advisor</button>
+            </div>
+
+            <!-- Tab Content -->
+            <div id="strategic-matrix" class="tab-content active">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-gray-900/70 border border-orange-500 rounded-lg p-5">
+                        <h3 class="text-xl font-bold text-orange-500">Market Analysis</h3>
+                        <p class="text-sm text-gray-400 mt-1">Conduct a deep dive into your target market.</p>
+                        <button class="btn py-2 px-4 rounded-full mt-4 w-full game-module-btn" data-module="market-analysis">Start Assessment ✨</button>
+                    </div>
+                    <div class="bg-gray-900/70 border border-orange-500 rounded-lg p-5">
+                        <h3 class="text-xl font-bold text-orange-500">SWOT Assessment</h3>
+                        <p class="text-sm text-gray-400 mt-1">Evaluate your venture's Strengths, Weaknesses, Opportunities, and Threats.</p>
+                        <button class="btn py-2 px-4 rounded-full mt-4 w-full game-module-btn" data-module="swot-assessment">Start Assessment ✨</button>
+                    </div>
+                    <div class="bg-gray-900/70 border border-orange-500 rounded-lg p-5">
+                        <h3 class="text-xl font-bold text-orange-500">Strategic Options</h3>
+                        <p class="text-sm text-gray-400 mt-1">Explore and analyze various strategic pathways for your project.</p>
+                        <button class="btn py-2 px-4 rounded-full mt-4 w-full game-module-btn" data-module="strategic-options">Explore Options ✨</button>
+                    </div>
+                    <div class="bg-gray-900/70 border border-orange-500 rounded-lg p-5">
+                        <h3 class="text-xl font-bold text-orange-500">Implementation Roadmap</h3>
+                        <p class="text-sm text-gray-400 mt-1">Create a step-by-step plan for execution.</p>
+                        <button class="btn py-2 px-4 rounded-full mt-4 w-full game-module-btn" data-module="roadmap">Build Roadmap ✨</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="venture-architect" class="tab-content">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-gray-900/70 border border-orange-500 rounded-lg p-5">
+                        <h3 class="text-xl font-bold text-orange-500">Business Model Canvas</h3>
+                        <p class="text-sm text-gray-400 mt-1">Interactive session to design your business model.</p>
+                        <button class="btn py-2 px-4 rounded-full mt-4 w-full game-module-btn" data-module="business-model-canvas">Design Model ✨</button>
+                    </div>
+                    <div class="bg-gray-900/70 border border-orange-500 rounded-lg p-5">
+                        <h3 class="text-xl font-bold text-orange-500">Organizational Structure</h3>
+                        <p class="text-sm text-gray-400 mt-1">Define the roles and hierarchy of your team.</p>
+                        <button class="btn py-2 px-4 rounded-full mt-4 w-full game-module-btn" data-module="org-structure">Build Structure ✨</button>
+                    </div>
+                    <div class="bg-gray-900/70 border border-orange-500 rounded-lg p-5">
+                        <h3 class="text-xl font-bold text-orange-500">Ecosystem Mapping</h3>
+                        <p class="text-sm text-gray-400 mt-1">Map out your venture's key partners and stakeholders.</p>
+                        <button class="btn py-2 px-4 rounded-full mt-4 w-full game-module-btn" data-module="ecosystem-mapping">View Possibilities ✨</button>
+                    </div>
+                    <div class="bg-gray-900/70 border border-orange-500 rounded-lg p-5">
+                        <h3 class="text-xl font-bold text-orange-500">Process Optimization</h3>
+                        <p class="text-sm text-gray-400 mt-1">AI-generated answers to streamline your operations.</p>
+                        <button class="btn py-2 px-4 rounded-full mt-4 w-full game-module-btn" data-module="process-optimization">AI Generated Answers ✨</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="partner-matchmaker" class="tab-content">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-gray-900/70 border border-orange-500 rounded-lg p-5">
+                        <h3 class="text-xl font-bold text-orange-500">Partner Discovery</h3>
+                        <p class="text-sm text-gray-400 mt-1">Find potential partners based on skills, resources, and strategic fit.</p>
+                        <button class="btn py-2 px-4 rounded-full mt-4 w-full game-module-btn" data-module="partner-discovery">Find Partners ✨</button>
+                    </div>
+                    <div class="bg-gray-900/70 border border-orange-500 rounded-lg p-5">
+                        <h3 class="text-xl font-bold text-orange-500">Compatibility Analysis</h3>
+                        <p class="text-sm text-gray-400 mt-1">Evaluate potential partners based on strategic alignment and cultural fit.</p>
+                        <button class="btn py-2 px-4 rounded-full mt-4 w-full game-module-btn" data-module="compatibility-analysis">Analyze Fit ✨</button>
+                    </div>
+                    <div class="bg-gray-900/70 border border-orange-500 rounded-lg p-5">
+                        <h3 class="text-xl font-bold text-orange-500">Partnership Framework</h3>
+                        <p class="text-sm text-gray-400 mt-1">Design the legal and operational framework for your partnership.</p>
+                        <button class="btn py-2 px-4 rounded-full mt-4 w-full game-module-btn" data-module="partnership-framework">Design Framework ✨</button>
+                    </div>
+                    <div class="bg-gray-900/70 border border-orange-500 rounded-lg p-5">
+                        <h3 class="text-xl font-bold text-orange-500">Collaboration Portal</h3>
+                        <p class="text-sm text-gray-400 mt-1">A secure workspace to collaborate with your partners in real-time.</p>
+                        <button class="btn py-2 px-4 rounded-full mt-4 w-full game-module-btn" data-module="collaboration-portal">Access Portal ✨</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="ai-strategy-advisor" class="tab-content">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-gray-900/70 border border-orange-500 rounded-lg p-5">
+                        <h3 class="text-xl font-bold text-orange-500">Strategic Insights</h3>
+                        <p class="text-sm text-gray-400 mt-1">Receive AI-generated strategic recommendations for your venture.</p>
+                        <button class="btn py-2 px-4 rounded-full mt-4 w-full game-module-btn" data-module="strategic-insights">Get Insights ✨</button>
+                    </div>
+                    <div class="bg-gray-900/70 border border-orange-500 rounded-lg p-5">
+                        <h3 class="text-xl font-bold text-orange-500">Risk Assessment</h3>
+                        <p class="text-sm text-gray-400 mt-1">Identify and mitigate potential risks to your venture.</p>
+                        <button class="btn py-2 px-4 rounded-full mt-4 w-full game-module-btn" data-module="risk-assessment">Assess Risks ✨</button>
+                    </div>
+                    <div class="bg-gray-900/70 border border-orange-500 rounded-lg p-5">
+                        <h3 class="text-xl font-bold text-orange-500">Market Forecast</h3>
+                        <p class="text-sm text-gray-400 mt-1">Access predictive analytics for your target markets and industries.</p>
+                        <button class="btn py-2 px-4 rounded-full mt-4 w-full game-module-btn" data-module="market-forecast">View Forecast ✨</button>
+                    </div>
+                    <div class="bg-gray-900/70 border border-orange-500 rounded-lg p-5">
+                        <h3 class="text-xl font-bold text-orange-500">Venture Simulation</h3>
+                        <p class="text-sm text-gray-400 mt-1">Test different scenarios and strategies in a risk-free environment.</p>
+                        <button class="btn py-2 px-4 rounded-full mt-4 w-full game-module-btn" data-module="venture-simulation">Run Simulation ✨</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    
+        <!-- Faculty Networking Section -->
+        <section class="card rounded-2xl p-6 sm:p-8 lg:p-10 hover:shadow-orange-500 hover:shadow-2xl hover:-translate-y-1">
+            <div class="flex items-center gap-4 border-b-2 border-orange-500 pb-4 mb-6">
+                <i class="fas fa-chalkboard-teacher text-3xl text-orange-500"></i>
+                <h2 class="font-['Orbitron'] text-2xl text-orange-500 uppercase">Faculty Networking Hub</h2>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Faculty Card 1 -->
+                <div class="bg-gray-900/70 border border-orange-500 rounded-lg p-5 transition-transform hover:translate-y-[-5px] hover:shadow-lg">
+                    <h3 class="text-xl font-bold text-orange-500">Dr. Anya Sharma</h3>
+                    <p class="text-sm text-gray-400">Quantum AI Specialist</p>
+                    <div class="mt-2 space-x-1">
+                        <span class="inline-block bg-orange-500/20 text-white px-3 py-1 rounded-full text-xs">AI</span>
+                        <span class="inline-block bg-orange-500/20 text-white px-3 py-1 rounded-full text-xs">Quantum</span>
+                    </div>
+                    <button class="bg-orange-500 text-black font-bold py-2 px-4 rounded-full mt-4 w-full connect-btn" data-faculty="Dr. Anya Sharma" data-expertise="Quantum AI Specialist">Connect</button>
+                </div>
+                <!-- Faculty Card 2 -->
+                <div class="bg-gray-900/70 border border-orange-500 rounded-lg p-5 transition-transform hover:translate-y-[-5px] hover:shadow-lg">
+                    <h3 class="text-xl font-bold text-orange-500">Jaxon 'JAX' Reed</h3>
+                    <p class="text-sm text-gray-400">Cybersecurity Architect</p>
+                    <div class="mt-2 space-x-1">
+                        <span class="inline-block bg-orange-500/20 text-white px-3 py-1 rounded-full text-xs">Security</span>
+                        <span class="inline-block bg-orange-500/20 text-white px-3 py-1 rounded-full text-xs">Blockchain</span>
+                    </div>
+                    <button class="bg-orange-500 text-black font-bold py-2 px-4 rounded-full mt-4 w-full connect-btn" data-faculty="Jaxon 'JAX' Reed" data-expertise="Cybersecurity Architect">Connect</button>
+                </div>
+                 <!-- Faculty Card 3 -->
+                 <div class="bg-gray-900/70 border border-orange-500 rounded-lg p-5 transition-transform hover:translate-y-[-5px] hover:shadow-lg">
+                    <h3 class="text-xl font-bold text-orange-500">Dr. Elias Vance</h3>
+                    <p class="text-sm text-gray-400">Data Visualization Guru</p>
+                    <div class="mt-2 space-x-1">
+                        <span class="inline-block bg-orange-500/20 text-white px-3 py-1 rounded-full text-xs">Data Science</span>
+                        <span class="inline-block bg-orange-500/20 text-white px-3 py-1 rounded-full text-xs">Visualization</span>
+                    </div>
+                    <button class="bg-orange-500 text-black font-bold py-2 px-4 rounded-full mt-4 w-full connect-btn" data-faculty="Dr. Elias Vance" data-expertise="Data Visualization Guru">Connect</button>
+                </div>
+            </div>
+            <!-- Start Chat Button -->
+            <button id="start-chat-btn" class="btn w-full py-4 rounded-xl mt-8">
+                Connect to a Faculty Chatbot
+            </button>
+        </section>
+
+    </main>
+
+    <!-- Chat Section -->
+    <div id="chat-section" class="chat-section flex-col">
+        <header class="p-4 border-b-2 border-orange-500 relative flex justify-center items-center">
+            <h2 class="font-['Orbitron'] text-xl uppercase bg-clip-text text-transparent bg-gradient-to-r from-violet-500 to-blue-500 tracking-wide">
+                Faculty Computing Chat
+            </h2>
+            <button id="close-chat-btn" class="absolute left-4 bg-red-500 text-white p-2 rounded-full w-10 h-10 flex items-center justify-center transition-transform hover:scale-110">
+                <i class="fas fa-times"></i>
+            </button>
+        </header>
+        <div class="flex-1 flex overflow-hidden p-4 gap-4">
+            <!-- Participants Panel -->
+            <div class="participants-panel w-56 bg-black/30 rounded-2xl p-4 overflow-y-auto border border-blue-500 shadow-blue-500/20 flex-shrink-0">
+                <h3 class="font-['Orbitron'] text-lg text-blue-500 text-center border-b border-blue-500 pb-2 mb-4">Participants</h3>
+                <div id="participants-list">
+                    <!-- Participants will be dynamically added here -->
+                </div>
+            </div>
+            <!-- Chat Window -->
+            <div class="chat-window flex-1 flex flex-col overflow-hidden bg-black/20 rounded-2xl border border-purple-500 shadow-purple-500/20">
+                <div id="chat-messages" class="chat-messages space-y-4 p-5 overflow-y-auto">
+                    <!-- Messages will be dynamically added here -->
+                </div>
+                <div class="chat-input-container">
+                    <input type="text" id="message-input" placeholder="Type your message here..." class="flex-1 py-3 px-4 rounded-full bg-white/10 text-white text-lg focus:bg-white/15 focus:shadow-orange-500/50">
+                    <button id="send-button" class="bg-orange-500 text-black w-12 h-12 rounded-full ml-3 flex items-center justify-center text-2xl transition-transform hover:scale-105">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal for interactive content -->
+    <div id="interactive-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center p-4">
+        <div class="bg-gray-900 border-2 border-orange-500 p-8 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90%] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6 border-b-2 border-orange-500 pb-4">
+                <h3 id="modal-title" class="font-['Orbitron'] text-2xl text-orange-500 uppercase"></h3>
+                <button class="text-gray-400 hover:text-white" id="close-modal-btn"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div id="modal-content" class="text-white space-y-4">
+                <!-- Dynamic content will be loaded here -->
+            </div>
+            <div id="modal-input-area" class="mt-6 hidden">
+                <textarea id="modal-input" class="w-full bg-black/70 text-white rounded-lg p-3 mt-4" rows="4" placeholder="Type your response here..."></textarea>
+            </div>
+            <div id="modal-actions" class="mt-6 flex justify-end gap-4">
+                 <!-- Dynamic buttons will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // DOM Elements references
+            const DOMElements = {
+                hubSection: document.getElementById('hub-section'),
+                chatSection: document.getElementById('chat-section'),
+                startChatBtn: document.getElementById('start-chat-btn'),
+                closeChatBtn: document.getElementById('close-chat-btn'),
+                avatarForm: document.getElementById('avatar-form'),
+                futureNameInput: document.getElementById('futureName'),
+                iidInput: document.getElementById('iid'),
+                colorOptions: document.querySelectorAll('.color-option'),
+                avatarNamePreview: document.getElementById('avatar-name-preview'),
+                avatarTribePreview: document.getElementById('avatar-tribe-preview'),
+                avatarIidPreview: document.getElementById('avatar-iid-preview'),
+                chatMessages: document.getElementById('chat-messages'),
+                messageInput: document.getElementById('message-input'),
+                sendButton: document.getElementById('send-button'),
+                participantsList: document.getElementById('participants-list'),
+                tabButtons: document.querySelectorAll('.tab-button'),
+                tabContents: document.querySelectorAll('.tab-content'),
+                connectButtons: document.querySelectorAll('.connect-btn'),
+                gameModuleButtons: document.querySelectorAll('.game-module-btn'),
+                interactiveModal: document.getElementById('interactive-modal'),
+                modalTitle: document.getElementById('modal-title'),
+                modalContent: document.getElementById('modal-content'),
+                modalInputArea: document.getElementById('modal-input-area'),
+                modalInput: document.getElementById('modal-input'),
+                modalActions: document.getElementById('modal-actions'),
+                closeModalBtn: document.getElementById('close-modal-btn'),
+            };
+
+            // Global State
+            let userAvatar = {
+                futureName: 'Callsign_Preview',
+                tribe: 'None',
+                tribeColor: 'var(--manipal-orange)',
+                iid: '000000-0000'
+            };
+            const facultyConfig = {
+                'Dr. Anya Sharma': {
+                    expertise: 'Quantum AI Specialist',
+                    color: 'var(--tribe-violet)',
+                },
+                'Jaxon \'JAX\' Reed': {
+                    expertise: 'Cybersecurity Architect',
+                    color: 'var(--tribe-blue)',
+                },
+                'Dr. Elias Vance': {
+                    expertise: 'Data Visualization Guru',
+                    color: 'var(--tribe-green)',
+                }
+            };
+            let currentFaculty = '';
+            let chatHistory = [];
+            let modalChatHistory = [];
+            const LLM_MODEL = 'gemini-2.5-flash-preview-05-20';
+            let isThinking = false;
+            let currentSession = null; // To track if we are in a modal game session
+
+            // --- LLM API INTERACTION ---
+            async function callLLM(prompt, history, systemPrompt = null) {
+                const apiKey = "";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${LLM_MODEL}:generateContent?key=${apiKey}`;
+                
+                const fullHistory = [];
+                if (systemPrompt) {
+                    fullHistory.push({ role: 'user', parts: [{ text: systemPrompt }] });
+                    fullHistory.push({ role: 'model', parts: [{ text: 'acknowledged.' }] });
+                }
+                
+                fullHistory.push(...history);
+                fullHistory.push({ role: "user", parts: [{ text: prompt }] });
+                
+                const payload = {
+                    contents: fullHistory,
+                    generationConfig: {
+                        temperature: 0.7,
+                        maxOutputTokens: 500,
+                    }
+                };
+                
+                let retries = 0;
+                const maxRetries = 5;
+                const initialDelay = 1000;
+
+                while (retries < maxRetries) {
+                    try {
+                        const response = await fetch(apiUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+
+                        if (response.status === 429) {
+                            retries++;
+                            const delay = initialDelay * Math.pow(2, retries - 1);
+                            await new Promise(resolve => setTimeout(resolve, delay));
+                            continue;
+                        }
+
+                        const result = await response.json();
+                        if (result.candidates && result.candidates.length > 0 &&
+                            result.candidates[0].content && result.candidates[0].content.parts &&
+                            result.candidates[0].content.parts.length > 0) {
+                            
+                            const text = result.candidates[0].content.parts[0].text;
+                            return text;
+                        } else {
+                            console.error("Unexpected API response structure:", result);
+                            return "Error: Could not get a response from the AI. Please try again later.";
+                        }
+                    } catch (error) {
+                        console.error("API call failed:", error);
+                        retries++;
+                        const delay = initialDelay * Math.pow(2, retries - 1);
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                    }
+                }
+                return "Error: The server is not responding. Please try again later.";
+            }
+
+            // --- UI FUNCTIONS ---
+            function showChat() {
+                if (!userAvatar.futureName || userAvatar.futureName === 'Callsign_Preview') {
+                    alert('Please create and save your avatar first.');
+                    return;
+                }
+                DOMElements.hubSection.classList.add('hidden');
+                DOMElements.chatSection.style.display = 'flex';
+                renderParticipants();
+                
+                // Clear and add initial message to the chat history
+                chatHistory = [];
+                addMessage(currentFaculty, `Greetings, ${userAvatar.futureName}. As a ${facultyConfig[currentFaculty].expertise}, how can I assist you with your venture today?`, false);
+            }
+
+            function showHub() {
+                DOMElements.hubSection.classList.remove('hidden');
+                DOMElements.chatSection.style.display = 'none';
+                chatHistory = []; // Clear chat history on exit
+            }
+
+            function renderParticipants() {
+                DOMElements.participantsList.innerHTML = '';
+                // Add user participant
+                const userP = document.createElement('div');
+                userP.className = 'participant p-2 mb-2 rounded-md text-sm flex items-center gap-2 bg-black/50 transition-all hover:bg-orange-500/20';
+                userP.innerHTML = `<div class="participant-icon w-4 h-4 rounded-full" style="background-color: ${userAvatar.tribeColor};"></div> ${userAvatar.futureName}`;
+                DOMElements.participantsList.appendChild(userP);
+
+                // Add bot participant
+                const botP = document.createElement('div');
+                botP.className = 'participant p-2 mb-2 rounded-md text-sm flex items-center gap-2 bg-black/50 transition-all hover:bg-blue-500/20';
+                botP.innerHTML = `<div class="participant-icon w-4 h-4 rounded-full" style="background-color: ${facultyConfig[currentFaculty].color};"></div> ${currentFaculty}`;
+                DOMElements.participantsList.appendChild(botP);
+            }
+
+            function addMessage(sender, text, isUser) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message p-4 rounded-xl shadow-lg animate-fade-in ${isUser ? 'user-message self-end rounded-br-sm' : 'bot-message self-start rounded-bl-sm'}`;
+                
+                const senderName = document.createElement('div');
+                senderName.className = 'username font-bold mb-1 flex items-center';
+                senderName.innerHTML = `<div class="w-3 h-3 rounded-full mr-2" style="background-color: ${isUser ? userAvatar.tribeColor : facultyConfig[sender].color};"></div> ${sender}`;
+                
+                const messageText = document.createElement('p');
+                messageText.innerHTML = text.replace(/\n/g, '<br>');
+                
+                messageDiv.appendChild(senderName);
+                messageDiv.appendChild(messageText);
+                DOMElements.chatMessages.appendChild(messageDiv);
+                
+                DOMElements.chatMessages.scrollTop = DOMElements.chatMessages.scrollHeight;
+            }
+
+            function showModal(title, contentHTML, hasInput = false, actionsHTML = '') {
+                DOMElements.modalTitle.textContent = title;
+                DOMElements.modalContent.innerHTML = contentHTML;
+                DOMElements.modalActions.innerHTML = actionsHTML;
+                DOMElements.modalInputArea.classList.toggle('hidden', !hasInput);
+                DOMElements.interactiveModal.classList.remove('hidden');
+            }
+
+            function hideModal() {
+                DOMElements.interactiveModal.classList.add('hidden');
+                modalChatHistory = []; // Clear modal chat history on exit
+                currentSession = null;
+            }
+
+            async function handleModalInput() {
+                if(isThinking) return;
+                isThinking = true;
+
+                const userText = DOMElements.modalInput.value.trim();
+                if (userText) {
+                    modalChatHistory.push({ role: 'user', parts: [{ text: userText }] });
+
+                    const thinkingMessage = document.createElement('div');
+                    thinkingMessage.innerHTML = `<div class="loading-spinner mx-auto my-4"></div><p class="text-center text-gray-400">Thinking...</p>`;
+                    DOMElements.modalContent.appendChild(thinkingMessage);
+                    DOMElements.modalContent.scrollTop = DOMElements.modalContent.scrollHeight;
+
+                    DOMElements.modalInput.value = '';
+                    DOMElements.modalInput.disabled = true;
+                    DOMElements.modalActions.innerHTML = `<button class="btn py-2 px-4 rounded-xl opacity-50 cursor-not-allowed">Wait...</button>`;
+
+                    const systemPrompt = `You are an AI-powered strategic assistant guiding a student through a "${currentSession.title}" session. The student's name is ${userAvatar.futureName} and they are part of the ${userAvatar.tribe} tribe. You have a detailed understanding of business strategy, market analysis, and venture architecture. Guide them conversationally, providing structured questions and feedback. Keep your responses concise and focused on the current step.`;
+                    const llmResponse = await callLLM(userText, modalChatHistory, systemPrompt);
+
+                    modalChatHistory.push({ role: 'model', parts: [{ text: llmResponse }] });
+                    DOMElements.modalContent.removeChild(thinkingMessage);
+                    
+                    const responseDiv = document.createElement('div');
+                    responseDiv.innerHTML = `<p class="font-bold text-orange-400">${currentSession.title} AI:</p><p>${llmResponse.replace(/\n/g, '<br>')}</p>`;
+                    DOMElements.modalContent.appendChild(responseDiv);
+                    
+                    DOMElements.modalInput.disabled = false;
+                    DOMElements.modalActions.innerHTML = `<button class="btn py-2 px-4 rounded-xl" id="modal-submit-btn">Next Step</button>`;
+                }
+                isThinking = false;
+            }
+
+            // --- EVENT LISTENERS ---
+            DOMElements.connectButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const facultyName = button.dataset.faculty;
+                    currentFaculty = facultyName;
+                    showChat();
+                });
+            });
+
+            DOMElements.startChatBtn.addEventListener('click', () => {
+                const facultyNames = Object.keys(facultyConfig);
+                const randomFaculty = facultyNames[Math.floor(Math.random() * facultyNames.length)];
+                currentFaculty = randomFaculty;
+                showChat();
+            });
+            DOMElements.closeChatBtn.addEventListener('click', showHub);
+            DOMElements.closeModalBtn.addEventListener('click', hideModal);
+
+            DOMElements.sendButton.addEventListener('click', async () => {
+                const message = DOMElements.messageInput.value.trim();
+                if (message && !isThinking) {
+                    isThinking = true;
+                    addMessage(userAvatar.futureName, message, true);
+                    chatHistory.push({ role: "user", parts: [{ text: message }] });
+                    DOMElements.messageInput.value = '';
+
+                    const thinkingMessage = addMessage(currentFaculty, '<div class="loading-spinner"></div>', false);
+
+                    const systemPrompt = `You are a faculty member at Manipal Multiverse, a ${facultyConfig[currentFaculty].expertise}. The student's name is ${userAvatar.futureName}. Engage in a helpful and informative conversation, providing concise, expert advice based on your role. Do not break character.`;
+                    const llmResponse = await callLLM(message, chatHistory, systemPrompt);
+                    
+                    // Replace the loading message with the real response
+                    const loadingElement = DOMElements.chatMessages.lastChild;
+                    if (loadingElement) {
+                        loadingElement.parentNode.removeChild(loadingElement);
+                    }
+                    addMessage(currentFaculty, llmResponse, false);
+                    chatHistory.push({ role: "model", parts: [{ text: llmResponse }] });
+                    isThinking = false;
+                }
+            });
+
+            DOMElements.messageInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    DOMElements.sendButton.click();
+                }
+            });
+
+            DOMElements.gameModuleButtons.forEach(button => {
+                button.addEventListener('click', async () => {
+                    if (!userAvatar.futureName || userAvatar.futureName === 'Callsign_Preview') {
+                        alert('Please create and save your avatar first.');
+                        return;
+                    }
+                    
+                    const moduleName = button.dataset.module;
+                    const moduleTitle = button.closest('.bg-gray-900\\/70').querySelector('h3').textContent;
+                    currentSession = { name: moduleName, title: moduleTitle };
+                    modalChatHistory = [];
+                    
+                    showModal(moduleTitle, `
+                        <div class="loading-spinner mx-auto my-4"></div>
+                        <p class="text-center text-gray-400">Loading ${moduleTitle} module...</p>
+                    `, false);
+                    
+                    const prompt = `You are a strategic AI advisor. Initiate a conversation about a "${moduleTitle}" session for a student named ${userAvatar.futureName}. Ask the first question to begin the guided interactive process.`;
+                    const systemPrompt = `You are an AI-powered strategic assistant guiding a student through a "${moduleTitle}" session. The student's name is ${userAvatar.futureName} and they are part of the ${userAvatar.tribe} tribe. You have a detailed understanding of business strategy, market analysis, and venture architecture. Guide them conversationally, providing structured questions and feedback. Keep your responses concise and focused on the current step.`;
+                    const llmResponse = await callLLM(prompt, modalChatHistory, systemPrompt);
+                    
+                    modalChatHistory.push({ role: 'model', parts: [{ text: llmResponse }] });
+                    
+                    showModal(moduleTitle, `<p>${llmResponse.replace(/\n/g, '<br>')}</p>`, true, `
+                        <button class="btn py-2 px-4 rounded-xl" id="modal-submit-btn">Next Step</button>
+                    `);
+                    
+                    document.getElementById('modal-submit-btn').addEventListener('click', handleModalInput);
+                    DOMElements.modalInput.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter') {
+                            handleModalInput();
+                        }
+                    });
+                });
+            });
+
+
+            DOMElements.tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    DOMElements.tabButtons.forEach(btn => btn.classList.remove('active-tab'));
+                    button.classList.add('active-tab');
+                    DOMElements.tabContents.forEach(content => {
+                        content.classList.remove('active');
+                        if (content.id === button.dataset.tab) {
+                            content.classList.add('active');
+                        }
+                    });
+                });
+            });
+            
+            // Avatar form event listener (kept from previous version)
+            DOMElements.avatarForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                userAvatar.futureName = DOMElements.futureNameInput.value || 'Callsign_Preview';
+                userAvatar.iid = `IID: ${Math.floor(Math.random() * 900000) + 100000}-${Math.floor(Math.random() * 9000) + 1000}`;
+                
+                DOMElements.avatarNamePreview.textContent = userAvatar.futureName;
+                DOMElements.avatarIidPreview.textContent = userAvatar.iid;
+                DOMElements.iidInput.value = userAvatar.iid.split(': ')[1];
+            });
+
+            // Tribe color selection (kept from previous version)
+            DOMElements.colorOptions.forEach(option => {
+                option.addEventListener('click', () => {
+                    DOMElements.colorOptions.forEach(o => o.classList.remove('selected'));
+                    option.classList.add('selected');
+                    const tribe = option.dataset.tribe;
+                    const tribeColor = getComputedStyle(option).backgroundColor;
+                    userAvatar.tribe = tribe;
+                    userAvatar.tribeColor = tribeColor;
+                    document.documentElement.style.setProperty('--current-accent', tribeColor);
+                    DOMElements.avatarTribePreview.textContent = `Tribe: ${tribe}`;
+                    // Update border color of the avatar preview
+                    const avatarDisplay = DOMElements.avatarNamePreview.closest('.flex-col').querySelector('div');
+                    avatarDisplay.style.borderColor = tribeColor;
+                });
+            });
+
+            // Initial setup
+            const studentId = '00112233'; // For demonstration
+            DOMElements.iidInput.value = studentId;
+        });
+    </script>
+</body>
+</html>
